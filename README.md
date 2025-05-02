@@ -2,9 +2,9 @@
 
 Q: How can we encode and decode information with DNA under these constraints?
 
-No triple A, C, T, or G.
+1- No triple A, C, T, or G.
 
-GC content must be between 25% and 75%.
+2- GC content must be between 25% and 75%.
 
 In the first step, we encode 7-bit ASCII (128 combinations) into an 8-bit binary format (256 combinations) while enforcing the constraints. We filter out any of the 256 binary states that contain triple A/C/T/G, and also exclude those starting or ending with two identical nucleotides to prevent triple repetition when characters are joined. Next, we calculate the GC content and keep only the binary codes with GC content between 25% and 75%. This results in 130 valid 8-bit binary states that meet all constraints.
 
