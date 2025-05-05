@@ -2,6 +2,53 @@ import streamlit as st
 import csv
 import os
 
+# Set page configuration - with minimal menu items
+st.set_page_config(
+    page_title="DNA Encoder",
+    page_icon="🧬",
+    layout="wide",
+    menu_items={
+        'Get help': None,
+        'Report a bug': None,
+        'About': None
+    }
+)
+
+# Apply Courier New font styling
+st.markdown("""
+<style>
+    /* Set Courier New as the default font for the entire app */
+    html, body, [class*="st-"] {
+        font-family: 'Courier New', monospace;
+    }
+    .main-title {
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+    }
+    .subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: #666;
+        font-family: 'Courier New', monospace;
+    }
+    /* Hide most of the default header */
+    header {
+        visibility: hidden;
+    }
+    /* Keep only the "Share" button visible */
+    header button:last-child {
+        visibility: visible;
+    }
+    /* Hide hamburger menu */
+    section[data-testid="stSidebar"] {
+        display: none;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Character to 7-bit binary mapping
 char_to_7bit = {
     'Y': '0000000', 'Q': '0000001', 'K': '0000010', '_': '0000011', '7': '0000100',
@@ -114,7 +161,8 @@ def gc_content(seq):
     return (gc / len(seq)) * 100.0
 
 # Set up the Streamlit interface
-st.title("Text to DNA (ACTG) Encoder")
+st.markdown('<h1 class="main-title">Have you ever wondered how your name would be stored on a biological hard disk?</h1>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Enter text below to encode it into DNA (ACTG) sequences</p>', unsafe_allow_html=True)
 
 # Text input
 user_input = st.text_area("Enter your text to encode:", height=150)
@@ -122,8 +170,13 @@ user_input = st.text_area("Enter your text to encode:", height=150)
 # Path to the CSV file in the repository
 csv_file_path = "7to8.csv"  # Change this to the actual path of your CSV file
 
-# Encode button
-if st.button("Encode to DNA"):
+# Create two columns for button and result
+col1, col2 = st.columns([1, 3])
+
+with col1:
+    encode_button = st.button("Encode to DNA")
+
+if encode_button:
     if not user_input:
         st.warning("Please enter some text to encode.")
     else:
@@ -143,12 +196,19 @@ if st.button("Encode to DNA"):
                 actg_sequence = text_to_actg(user_input, encoding_map)
                 
                 # Display results
-                st.subheader("Encoded DNA Sequence")
+                st.markdown('<h2>Encoded DNA Sequence</h2>', unsafe_allow_html=True)
                 st.code(actg_sequence)
                 
                 # Calculate and display GC content
                 gc = gc_content(actg_sequence)
                 st.metric("GC Content", f"{gc:.2f}%")
                 
+                # Additional explanation
+                st.markdown('<p>This sequence represents how your text would be stored in a DNA-based storage system!</p>', unsafe_allow_html=True)
+                
         except Exception as e:
             st.error(f"Error: {str(e)}")
+
+# Footer information
+st.markdown("---")
+st.markdown('<p style="text-align:center; color:#888; font-size:0.8rem;">DNA Encoding Tool - Using biological molecules to store digital information</p>', unsafe_allow_html=True)
