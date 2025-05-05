@@ -14,95 +14,14 @@ st.set_page_config(
     }
 )
 
-# Define DNA animation HTML - this is a simpler animation that will definitely display
+# Define DNA animation HTML - more realistic rotating DNA in the last quarter of the page
 dna_animation_html = """
 <style>
-    /* DNA animation container */
-    .dna-animation-container {
-        position: fixed;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: 100px;
-        overflow: hidden;
-        z-index: 1000;
-    }
-    
-    /* DNA strand styling */
-    .dna-strand {
-        position: absolute;
-        left: 40px;
-        top: 10px;
-        bottom: 10px;
-        width: 20px;
-        animation: dna-float 10s infinite linear;
-    }
-    
-    /* Basepair styling */
-    .base-pair {
-        position: absolute;
-        width: 60px;
-        height: 5px;
-        background: linear-gradient(to right, #00CED1, #20B2AA);
-        left: -20px;
-        border-radius: 10px;
-        opacity: 0.8;
-    }
-    
-    /* Left nucleotide */
-    .base-pair::before {
-        content: "";
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background-color: #20B2AA;
-        left: -5px;
-        top: -3px;
-    }
-    
-    /* Right nucleotide */
-    .base-pair::after {
-        content: "";
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background-color: #008B8B;
-        right: -5px;
-        top: -3px;
-    }
-    
-    /* Alternate base pairs */
-    .base-pair:nth-child(even) {
-        transform: rotate(30deg);
-    }
-    
-    .base-pair:nth-child(odd) {
-        transform: rotate(-30deg);
-    }
-    
-    /* Animation keyframes */
-    @keyframes dna-float {
-        0% {
-            transform: translateY(0) rotate(0deg);
-        }
-        100% {
-            transform: translateY(-50%) rotate(360deg);
-        }
-    }
-    
-    /* Offset for main content */
-    .main-content {
-        margin-left: 80px;
-    }
-    
-    /* Ensure Courier New as the default font */
+    /* Base styling */
     html, body, [class*="st-"] {
         font-family: 'Courier New', monospace;
     }
     
-    /* Title styling */
     .main-title {
         font-size: 2.2rem;
         margin-bottom: 1rem;
@@ -132,21 +51,138 @@ dna_animation_html = """
     section[data-testid="stSidebar"] {
         display: none;
     }
+    
+    /* Realistic DNA styling */
+    .dna-container {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        width: 150px;
+        height: 300px;
+        perspective: 800px;
+        z-index: 1000;
+    }
+    
+    .dna-helix {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        animation: rotate 15s linear infinite;
+    }
+    
+    @keyframes rotate {
+        0% {
+            transform: rotateY(0deg);
+        }
+        100% {
+            transform: rotateY(360deg);
+        }
+    }
+    
+    /* Create the two strands */
+    .strand {
+        position: absolute;
+        width: 6px;
+        height: 100%;
+        left: 72px;
+        background: linear-gradient(to bottom, 
+            rgba(0,206,209,0.7) 0%, 
+            rgba(32,178,170,0.9) 50%, 
+            rgba(0,206,209,0.7) 100%);
+        border-radius: 5px;
+    }
+    
+    .strand:nth-child(1) {
+        transform: translateX(-20px) rotateY(0deg);
+    }
+    
+    .strand:nth-child(2) {
+        transform: translateX(20px) rotateY(180deg);
+    }
+    
+    /* Create the base pairs (rungs) */
+    .base-pair {
+        position: absolute;
+        width: 40px;
+        height: 5px;
+        left: -17px;
+        border-radius: 5px;
+    }
+    
+    /* Different colors for base pairs */
+    .base-pair:nth-child(4n+1) {
+        background: linear-gradient(to right, #20B2AA, #48D1CC);
+    }
+    
+    .base-pair:nth-child(4n+2) {
+        background: linear-gradient(to right, #00CED1, #5F9EA0);
+    }
+    
+    .base-pair:nth-child(4n+3) {
+        background: linear-gradient(to right, #008B8B, #40E0D0);
+    }
+    
+    .base-pair:nth-child(4n+4) {
+        background: linear-gradient(to right, #00FFFF, #00B2B2);
+    }
+    
+    /* Create nucleotides at the ends of base pairs */
+    .base-pair::before, .base-pair::after {
+        content: "";
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        top: -3px;
+    }
+    
+    .base-pair::before {
+        left: -5px;
+    }
+    
+    .base-pair::after {
+        right: -5px;
+    }
+    
+    /* Different colors for nucleotides */
+    .base-pair:nth-child(4n+1)::before { background-color: #20B2AA; }
+    .base-pair:nth-child(4n+1)::after { background-color: #48D1CC; }
+    
+    .base-pair:nth-child(4n+2)::before { background-color: #00CED1; }
+    .base-pair:nth-child(4n+2)::after { background-color: #5F9EA0; }
+    
+    .base-pair:nth-child(4n+3)::before { background-color: #008B8B; }
+    .base-pair:nth-child(4n+3)::after { background-color: #40E0D0; }
+    
+    .base-pair:nth-child(4n+4)::before { background-color: #00FFFF; }
+    .base-pair:nth-child(4n+4)::after { background-color: #00B2B2; }
 </style>
 
-<div class="dna-animation-container">
-    <div class="dna-strand">
+<div class="dna-container">
+    <div class="dna-helix">
+        <div class="strand">
 """
 
-# Generate 40 base pairs for the DNA animation
-for i in range(40):
-    dna_animation_html += f'<div class="base-pair" style="top: {i * 20}px;"></div>\n'
+# Generate 16 base pairs for strand 1
+for i in range(16):
+    angle = i * (360 / 16)
+    dna_animation_html += f'<div class="base-pair" style="top: {i * 18}px; transform: rotateY({angle}deg);"></div>\n'
 
 dna_animation_html += """
+        </div>
+        <div class="strand">
+"""
+
+# Generate 16 base pairs for strand 2
+for i in range(16):
+    angle = i * (360 / 16)
+    dna_animation_html += f'<div class="base-pair" style="top: {i * 18}px; transform: rotateY({angle}deg);"></div>\n'
+
+dna_animation_html += """
+        </div>
     </div>
 </div>
-
-<div class="main-content">
 """
 
 # Apply the styles and DNA animation
@@ -315,6 +351,3 @@ if encode_button:
 # Footer information
 st.markdown("---")
 st.markdown('<p style="text-align:center; color:#888; font-size:0.8rem;">DNA Encoding Tool - Using biological molecules to store digital information</p>', unsafe_allow_html=True)
-
-# Close the main content div
-st.markdown('</div>', unsafe_allow_html=True)
