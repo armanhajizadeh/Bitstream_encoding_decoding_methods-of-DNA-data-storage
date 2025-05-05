@@ -64,37 +64,18 @@ def gc_content(seq):
 
 # === Streamlit UI Starts Here ===
 
-st.title("Text to DNA (ACTG) Encoder")
+user_input = st.text_area("Enter text to encode:")
 
-# Upload CSV file
-csv_file = st.file_uploader("Upload 7-to-8 bit mapping CSV (7to8.csv)", type="csv")
+if user_input:
+    try:
+        actg_sequence = text_to_actg(user_input, encoding_map)
+        gc = gc_content(actg_sequence)
 
-if csv_file is not None:
-    # Load encoding and decoding maps
-    encoding_map = {}
-    reader = csv.reader(csv_file)
-    next(reader)
-    for row in reader:
-        if len(row) == 2:
-            encoding_map[row[0]] = row[1]
-    decoding_map = {v: k for k, v in encoding_map.items()}
+        st.subheader("ACTG Sequence")
+        st.code(actg_sequence, language='text')
 
-    # Text input
-    user_input = st.text_area("Enter text to encode:")
+        st.subheader("GC Content")
+        st.write(f"{gc:.2f}%")
 
-    if user_input:
-        try:
-            # Encode
-            actg_sequence = text_to_actg(user_input, encoding_map)
-            gc = gc_content(actg_sequence)
-
-            st.subheader("ACTG Sequence")
-            st.code(actg_sequence, language='text')
-
-            st.subheader("GC Content")
-            st.write(f"{gc:.2f}%")
-
-        except ValueError as e:
-            st.error(f"Encoding Error: {e}")
-else:
-    st.info("Please upload the required 7to8.csv file to begin.")
+    except ValueError as e:
+        st.error(f"Encoding Error: {e}")
