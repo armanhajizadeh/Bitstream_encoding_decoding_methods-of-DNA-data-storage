@@ -1,9 +1,9 @@
 import streamlit as st
 import csv
-import os
+import io
 import base64
 
-# Set page configuration - with minimal menu items
+# Set page configuration
 st.set_page_config(
     page_title="DNA Encoder",
     page_icon="🧬",
@@ -15,7 +15,7 @@ st.set_page_config(
     }
 )
 
-# Apply Courier New font styling and hide GitHub and edit buttons
+# Apply Courier New font styling and hide all buttons except share
 st.markdown("""
 <style>
     /* Set Courier New as the default font for the entire app */
@@ -35,29 +35,36 @@ st.markdown("""
         color: #666;
         font-family: 'Courier New', monospace;
     }
-    /* Hide most of the default header */
-    header {
-        visibility: hidden;
-    }
-    /* Keep only the "Share" button visible */
-    header button:last-child {
-        visibility: visible;
-    }
-    /* Hide hamburger menu */
-    section[data-testid="stSidebar"] {
-        display: none;
-    }
-    /* Hide GitHub icon and edit buttons */
-    .viewerBadge_link__1S137, .viewerBadge_container__1QSob,
-    footer, #MainMenu, .stActionButton {
+    
+    /* Hide all buttons in the top-right corner EXCEPT share button */
+    .stDeployButton {
         display: none !important;
     }
-    /* Hide deploy and GitHub buttons */
-    .css-1rs6os {
-        visibility: hidden;
+    
+    /* Hide GitHub link and related elements */
+    .viewerBadge_container__1QSob, .viewerBadge_link__1S137 {
+        display: none !important;
     }
-    .stDeployButton {
-        display: none;
+    
+    /* Hide header elements except the rightmost one (share button) */
+    header button {
+        display: none !important;
+    }
+    header button:last-child {
+        display: block !important;
+    }
+    
+    /* Hide other elements we don't want */
+    footer {
+        display: none !important;
+    }
+    #MainMenu {
+        display: none !important;
+    }
+    
+    /* Hide sidebar */
+    section[data-testid="stSidebar"] {
+        display: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
