@@ -1,73 +1,6 @@
 import streamlit as st
 import csv
-import io
-import base64
-
-# Set page configuration
-st.set_page_config(
-    page_title="DNA Encoder",
-    page_icon="🧬",
-    layout="wide",
-    menu_items={
-        'Get help': None,
-        'Report a bug': None,
-        'About': None
-    }
-)
-
-# Apply Courier New font styling and hide all buttons except share
-st.markdown("""
-<style>
-    /* Set Courier New as the default font for the entire app */
-    html, body, [class*="st-"] {
-        font-family: 'Courier New', monospace;
-    }
-    .main-title {
-        font-size: 2.2rem;
-        margin-bottom: 1rem;
-        text-align: center;
-        font-family: 'Courier New', monospace;
-    }
-    .subtitle {
-        font-size: 1.2rem;
-        margin-bottom: 2rem;
-        text-align: center;
-        color: #666;
-        font-family: 'Courier New', monospace;
-    }
-    
-    /* Hide all buttons in the top-right corner EXCEPT share button */
-    .stDeployButton {
-        display: none !important;
-    }
-    
-    /* Hide GitHub link and related elements */
-    .viewerBadge_container__1QSob, .viewerBadge_link__1S137 {
-        display: none !important;
-    }
-    
-    /* Hide header elements except the rightmost one (share button) */
-    header button {
-        display: none !important;
-    }
-    header button:last-child {
-        display: block !important;
-    }
-    
-    /* Hide other elements we don't want */
-    footer {
-        display: none !important;
-    }
-    #MainMenu {
-        display: none !important;
-    }
-    
-    /* Hide sidebar */
-    section[data-testid="stSidebar"] {
-        display: none !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+import os
 
 # Character to 7-bit binary mapping
 char_to_7bit = {
@@ -107,158 +40,22 @@ binary_to_dna = {
     '11': 'G'
 }
 
-# Embed the 7to8.csv data directly
-# This is a placeholder - replace with your actual CSV content
-embedded_csv_data = """7-bit,8-bit
-0000000,00100011
-0000001,00010011
-0000010,00111011
-0000011,00110010
-0000100,00110100
-0000101,01001100
-0000110,01000011
-0000111,00111110
-0001000,00110001
-0001001,00011100
-0001010,01110011
-0001011,11001101
-0001100,11000111
-0001101,10111100
-0001110,11000100
-0001111,11001000
-0010000,11000001
-0010001,11000010
-0010010,10110011
-0010011,10001100
-0010100,11011100
-0010101,11010011
-0010110,01111100
-0010111,10000011
-0011000,00111101
-0011001,00110111
-0011010,11001110
-0011011,11001011
-0011100,11101100
-0011101,11100011
-0011110,00101101
-0011111,00101110
-0100000,01110010
-0100001,01110100
-0100010,01001110
-0100011,01000111
-0100100,01001000
-0100101,01000100
-0100110,01011110
-0100111,01111111
-0101000,01010100
-0101001,01000101
-0101010,00101111
-0101011,01010101
-0101100,01011010
-0101101,00101010
-0101110,01111101
-0101111,01111011
-0110000,01100001
-0110001,00111111
-0110010,01100011
-0110011,01010001
-0110100,01010010
-0110101,01000000
-0110110,01110110
-0110111,01100100
-0111000,01100101
-0111001,01101100
-0111010,01101001
-0111011,01101101
-0111100,01101110
-0111101,01110000
-0111110,01100110
-0111111,01100111
-1000000,10111000
-1000001,11111000
-1000010,10100111
-1000011,10101000
-1000100,10101001
-1000101,10101010
-1000110,10101100
-1000111,10101101
-1001000,10101110
-1001001,10101111
-1001010,10110000
-1001011,10110001
-1001100,10110010
-1001101,10110100
-1001110,10110101
-1001111,10110110
-1010000,10110111
-1010001,10111001
-1010010,10111010
-1010011,10111011
-1010100,10111101
-1010101,10111110
-1010110,10111111
-1010111,11000000
-1011000,11000011
-1011001,11000101
-1011010,11000110
-1011011,11001001
-1011100,11001010
-1011101,11001011
-1011110,11001100
-1011111,11001111
-1100000,11010000
-1100001,11010001
-1100010,11010010
-1100011,11010100
-1100100,11010101
-1100101,11010110
-1100110,11010111
-1100111,11011000
-1101000,11011001
-1101001,11011010
-1101010,11011011
-1101011,11011101
-1101100,11011110
-1101101,11011111
-1101110,11100000
-1101111,11100001
-1110000,11100010
-1110001,11100100
-1110010,11100101
-1110011,11100110
-1110100,11100111
-1110101,11101000
-1110110,11101001
-1110111,11101010
-1111000,11101011
-1111001,11101101
-1111010,11101110
-1111011,11101111
-1111100,11110000
-1111101,11110001
-1111110,11110010
-1111111,11110011"""
-
-def load_embedded_mapping():
+def load_7bit_to_8bit_mapping(csv_filename):
     """
-    Loads the 7-bit to 8-bit mapping from the embedded CSV data.
+    Loads the 7-bit to 8-bit mapping from the CSV file.
     Returns the mapping as a dictionary.
     """
     encoding_map = {}
     try:
-        # Split the CSV data into lines
-        lines = embedded_csv_data.strip().split('\n')
-        
-        # Parse the CSV data
-        for i, line in enumerate(lines):
-            if i == 0:  # Skip header
-                continue
-                
-            values = line.split(',')
-            if len(values) >= 2:
-                encoding_map[values[0]] = values[1]
+        with open(csv_filename, 'r', newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            header = next(reader, None)  # Skip header if exists
+            
+            for row in reader:
+                if len(row) >= 2:
+                    encoding_map[row[0]] = row[1]
     except Exception as e:
-        st.error(f"Error parsing embedded CSV data: {str(e)}")
+        st.error(f"Error loading CSV file: {str(e)}")
     
     return encoding_map
 
@@ -317,47 +114,41 @@ def gc_content(seq):
     return (gc / len(seq)) * 100.0
 
 # Set up the Streamlit interface
-st.markdown('<h1 class="main-title">Have you ever wondered how your name would be stored on a biological hard disk?</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Enter text below to encode it into DNA (ACTG) sequences</p>', unsafe_allow_html=True)
+st.title("Text to DNA (ACTG) Encoder")
 
 # Text input
 user_input = st.text_area("Enter your text to encode:", height=150)
 
-# Create two columns for button and result
-col1, col2 = st.columns([1, 3])
+# Path to the CSV file in the repository
+csv_file_path = "7to8.csv"  # Change this to the actual path of your CSV file
 
-with col1:
-    encode_button = st.button("Encode to DNA")
-
-if encode_button:
+# Encode button
+if st.button("Encode to DNA"):
     if not user_input:
         st.warning("Please enter some text to encode.")
     else:
         try:
-            # Load the mapping from embedded data instead of file
-            encoding_map = load_embedded_mapping()
+            # Load the mapping from repository file
+            if os.path.exists(csv_file_path):
+                encoding_map = load_7bit_to_8bit_mapping(csv_file_path)
+            else:
+                st.error(f"CSV file not found at path: {csv_file_path}")
+                encoding_map = {}
             
             # Check if mapping loaded successfully
             if not encoding_map:
-                st.error("Could not load mapping data. Please try again.")
+                st.error("Could not load mapping from CSV file. Please check the file format.")
             else:
                 # Encode the text
                 actg_sequence = text_to_actg(user_input, encoding_map)
                 
                 # Display results
-                st.markdown('<h2>Encoded DNA Sequence</h2>', unsafe_allow_html=True)
+                st.subheader("Encoded DNA Sequence")
                 st.code(actg_sequence)
                 
                 # Calculate and display GC content
                 gc = gc_content(actg_sequence)
                 st.metric("GC Content", f"{gc:.2f}%")
                 
-                # Additional explanation
-                st.markdown('<p>This sequence represents how your text would be stored in a DNA-based storage system!</p>', unsafe_allow_html=True)
-                
         except Exception as e:
             st.error(f"Error: {str(e)}")
-
-# Footer without links
-st.markdown("---")
-st.markdown('<p style="text-align:center; color:#888; font-size:0.8rem;">DNA Encoding Tool - Using biological molecules to store digital information</p>', unsafe_allow_html=True)
