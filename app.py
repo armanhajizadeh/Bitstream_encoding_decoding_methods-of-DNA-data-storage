@@ -1,4 +1,5 @@
 import streamlit as st
+import csv
 
 # Character to 7-bit binary mapping
 char_to_7bit = {
@@ -42,140 +43,20 @@ binary_to_dna = {
 
 dna_to_binary = {v: k for k, v in binary_to_dna.items()}
 
-# === HARDCODED 7-bit to 8-bit map (from your previously used CSV) ===
-encoding_map = {
-    '0000000': '00100011',
-    '0000001': '00010011',
-    '0000010': '00111011',
-    '0000011': '00110010',
-    '0000100': '00110100',
-    '0000101': '01001100',
-    '0000110': '01000011',
-    '0000111': '00111110',
-    '0001000': '00110001',
-    '0001001': '00011100',
-    '0001010': '01110011',
-    '0001011': '11001101',
-    '0001100': '11000111',
-    '0001101': '10111100',
-    '0001110': '11000100',
-    '0001111': '11001000',
-    '0010000': '11000001',
-    '0010001': '11000010',
-    '0010010': '10110011',
-    '0010011': '10001100',
-    '0010100': '11011100',
-    '0010101': '11010011',
-    '0010110': '01111100',
-    '0010111': '10000011',
-    '0011000': '00111101',
-    '0011001': '00110111',
-    '0011010': '11001110',
-    '0011011': '11001011',
-    '0011100': '11101100',
-    '0011101': '11100011',
-    '0011110': '00101101',
-    '0011111': '00101110',
-    '0100000': '01110010',
-    '0100001': '01110100',
-    '0100010': '01001110',
-    '0100011': '01000111',
-    '0100100': '01001000',
-    '0100101': '01000100',
-    '0100110': '01011110',
-    '0100111': '01111111',
-    '0101000': '01010100',
-    '0101001': '01000101',
-    '0101010': '00101111',
-    '0101011': '01010101',
-    '0101100': '01011010',
-    '0101101': '00101010',
-    '0101110': '01111101',
-    '0101111': '01111011',
-    '0110000': '01100001',
-    '0110001': '00111111',
-    '0110010': '01100011',
-    '0110011': '01010001',
-    '0110100': '01010010',
-    '0110101': '01000000',
-    '0110110': '01110110',
-    '0110111': '01100100',
-    '0111000': '01100101',
-    '0111001': '01101100',
-    '0111010': '01101001',
-    '0111011': '01101101',
-    '0111100': '01101110',
-    '0111101': '01110000',
-    '0111110': '01100110',
-    '0111111': '01100111',
-    '1000000': '10111000',
-    '1000001': '11111000',
-    '1000010': '10100111',
-    '1000011': '10101000',
-    '1000100': '10101001',
-    '1000101': '10101010',
-    '1000110': '10101100',
-    '1000111': '10101101',
-    '1001000': '10101110',
-    '1001001': '10101111',
-    '1001010': '10110000',
-    '1001011': '10110001',
-    '1001100': '10110010',
-    '1001101': '10110100',
-    '1001110': '10110101',
-    '1001111': '10110110',
-    '1010000': '10110111',
-    '1010001': '10111001',
-    '1010010': '10111010',
-    '1010011': '10111011',
-    '1010100': '10111101',
-    '1010101': '10111110',
-    '1010110': '10111111',
-    '1010111': '11000000',
-    '1011000': '11000011',
-    '1011001': '11000101',
-    '1011010': '11000110',
-    '1011011': '11001001',
-    '1011100': '11001010',
-    '1011101': '11001011',
-    '1011110': '11001100',
-    '1011111': '11001111',
-    '1100000': '11010000',
-    '1100001': '11010001',
-    '1100010': '11010010',
-    '1100011': '11010100',
-    '1100100': '11010101',
-    '1100101': '11010110',
-    '1100110': '11010111',
-    '1100111': '11011000',
-    '1101000': '11011001',
-    '1101001': '11011010',
-    '1101010': '11011011',
-    '1101011': '11011101',
-    '1101100': '11011110',
-    '1101101': '11011111',
-    '1101110': '11100000',
-    '1101111': '11100001',
-    '1110000': '11100010',
-    '1110001': '11100100',
-    '1110010': '11100101',
-    '1110011': '11100110',
-    '1110100': '11100111',
-    '1110101': '11101000',
-    '1110110': '11101001',
-    '1110111': '11101010',
-    '1111000': '11101011',
-    '1111001': '11101101',
-    '1111010': '11101110',
-    '1111011': '11101111',
-    '1111100': '11110000',
-    '1111101': '11110001',
-    '1111110': '11110010',
-    '1111111': '11110011'
-}
+def load_7bit_to_8bit_mapping(csv_filename='7to8.csv'):
+    """
+    Loads the 7-bit to 8-bit mapping from the CSV file.
+    Returns the mapping as a dictionary.
+    """
+    encoding_map = {}
+    with open(csv_filename, 'r', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)  # Skip header
+        for row in reader:
+            if len(row) == 2:
+                encoding_map[row[0]] = row[1]
 
-# Create decoding map
-decoding_map = {v: k for k, v in encoding_map.items()}
+    return encoding_map
 
 def binary_to_actg(binary_str):
     """
@@ -190,18 +71,6 @@ def binary_to_actg(binary_str):
         dna += binary_to_dna[pair]
 
     return dna
-
-def actg_to_binary(dna_str):
-    """
-    Converts an ACTG string back to binary.
-    """
-    binary = ''
-    for nucleotide in dna_str:
-        if nucleotide not in dna_to_binary:
-            raise ValueError(f"Invalid nucleotide: {nucleotide}")
-        binary += dna_to_binary[nucleotide]
-
-    return binary
 
 def text_to_actg(text, encoding_map):
     """
@@ -223,7 +92,7 @@ def text_to_actg(text, encoding_map):
             # Pad with zeros to make it 7 bits
             chunk_7bit = chunk_7bit.ljust(7, '0')
 
-        # Encode 7-bit to 8-bit using the mapping
+        # Encode 7-bit to 8-bit using the mapping from CSV
         binary_8bit += encoding_map[chunk_7bit]
 
     # Convert to ACTG (every 2 bits becomes 1 nucleotide)
@@ -246,10 +115,24 @@ st.title("Text to DNA (ACTG) Encoder")
 # Text input for encoding
 user_input = st.text_area("Enter your text to encode:", height=150)
 
+# File uploader for the CSV file
+uploaded_file = st.file_uploader("Upload your 7to8.csv file", type=['csv'])
+
 if st.button("Encode to DNA"):
-    if user_input:
+    if not user_input:
+        st.warning("Please enter some text to encode.")
+    elif not uploaded_file:
+        st.warning("Please upload your 7to8.csv file.")
+    else:
         try:
-            # Encode the text to ACTG with the encoding_map parameter
+            # Save the uploaded file to a temporary location
+            with open("temp_7to8.csv", "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            
+            # Load the encoding map from the uploaded CSV
+            encoding_map = load_7bit_to_8bit_mapping("temp_7to8.csv")
+            
+            # Encode the text to ACTG
             actg_sequence = text_to_actg(user_input, encoding_map)
             
             # Display the encoded DNA sequence
@@ -262,5 +145,3 @@ if st.button("Encode to DNA"):
             
         except Exception as e:
             st.error(f"Error: {e}")
-    else:
-        st.warning("Please enter some text to encode.")
