@@ -1,5 +1,8 @@
 import streamlit as st
 import csv
+import os
+import pandas as pd
+import traceback
 
 # Character to 7-bit binary mapping
 char_to_7bit = {
@@ -43,20 +46,63 @@ binary_to_dna = {
 
 dna_to_binary = {v: k for k, v in binary_to_dna.items()}
 
-def load_7bit_to_8bit_mapping(csv_filename='7to8.csv'):
+def safe_load_7bit_to_8bit_mapping(csv_filename):
     """
-    Loads the 7-bit to 8-bit mapping from the CSV file.
-    Returns the mapping as a dictionary.
+    Safely loads the 7-bit to 8-bit mapping from the CSV file with better error handling.
+    Returns the mapping as a dictionary and any error message.
     """
     encoding_map = {}
-    with open(csv_filename, 'r', newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        next(reader)  # Skip header
-        for row in reader:
-            if len(row) == 2:
-                encoding_map[row[0]] = row[1]
+    error_msg = None
+    
+    try:
+        # Try to read with pandas first (more robust CSV handling)
+        df = pd.read_csv(csv_filename)
+        
+        # Get the column names
+        st.write(f"CSV Columns: {df.columns.tolist()}")
+        
+        # Choose the first two columns, whatever they're named
+        col1, col2 = df.columns[0], df.columns[1]
+        
+        # Create the mapping
+        for _, row in df.iterrows():
+            key = str(row[col1]).strip()
+            value = str(row[col2]).strip()
+            encoding_map[key] = value
+        
+        st.write(f"Successfully loaded {len(encoding_map)} mappings from CSV")
+        
+        # Show a sample of the mapping
+        sample_keys = list(encoding_map.keys())[:5]
+        for key in sample_keys:
+            st.write(f"Sample: {key} -> {encoding_map[key]}")
+            
+    except Exception as e:
+        error_msg = f"Error loading CSV with pandas: {str(e)}\n{traceback.format_exc()}"
+        st.error(error_msg)
+        
+        # Fallback to standard CSV reader
+        try:
+            encoding_map = {}
+            with open(csv_filename, 'r', newline='') as csvfile:
+                reader = csv.reader(csvfile)
+                header = next(reader)  # Skip header
+                st.write(f"CSV Header: {header}")
+                
+                for row in reader:
+                    if len(row) >= 2:
+                        encoding_map[row[0].strip()] = row[1].strip()
+                    else:
+                        st.warning(f"Skipping row with insufficient columns: {row}")
+                
+            if encoding_map:
+                error_msg = None
+                st.write(f"Successfully loaded {len(encoding_map)} mappings with fallback method")
+        except Exception as e2:
+            error_msg = f"Error in fallback CSV loading: {str(e2)}\n{traceback.format_exc()}"
+            st.error(error_msg)
 
-    return encoding_map
+    return encoding_map, error_msg
 
 def binary_to_actg(binary_str):
     """
@@ -83,18 +129,36 @@ def text_to_actg(text, encoding_map):
             raise ValueError(f"Unsupported character: {char}")
         binary_7bit += char_to_7bit[char]
 
+    # Debug: Show 7-bit binary
+    st.write(f"7-bit binary length: {len(binary_7bit)}")
+    
     # Convert 7-bit chunks to 8-bit encoded chunks
     binary_8bit = ''
+    missing_keys = []
+    
     for i in range(0, len(binary_7bit), 7):
         chunk_7bit = binary_7bit[i:i+7]
         # Handle the last chunk if it's incomplete
         if len(chunk_7bit) < 7:
             # Pad with zeros to make it 7 bits
             chunk_7bit = chunk_7bit.ljust(7, '0')
+        
+        # Check if the key exists in the mapping
+        if chunk_7bit not in encoding_map:
+            missing_keys.append(chunk_7bit)
+            st.warning(f"Missing mapping for 7-bit chunk: {chunk_7bit}")
+            # Use a placeholder to continue processing
+            binary_8bit += '00000000'
+        else:
+            # Encode 7-bit to 8-bit using the mapping from CSV
+            binary_8bit += encoding_map[chunk_7bit]
 
-        # Encode 7-bit to 8-bit using the mapping from CSV
-        binary_8bit += encoding_map[chunk_7bit]
-
+    if missing_keys:
+        st.error(f"Missing {len(missing_keys)} keys in the encoding map. First few: {missing_keys[:5]}")
+    
+    # Debug: Show 8-bit binary
+    st.write(f"8-bit binary length: {len(binary_8bit)}")
+    
     # Convert to ACTG (every 2 bits becomes 1 nucleotide)
     actg = binary_to_actg(binary_8bit)
 
@@ -112,36 +176,76 @@ def gc_content(seq):
 # Streamlit UI
 st.title("Text to DNA (ACTG) Encoder")
 
+# Add debugging toggle
+show_debug = st.checkbox("Show debugging information")
+
 # Text input for encoding
 user_input = st.text_area("Enter your text to encode:", height=150)
 
 # File uploader for the CSV file
 uploaded_file = st.file_uploader("Upload your 7to8.csv file", type=['csv'])
 
-if st.button("Encode to DNA"):
+# Create two columns for the button and status
+col1, col2 = st.columns([1, 3])
+
+with col1:
+    encode_button = st.button("Encode to DNA")
+
+with col2:
+    status_placeholder = st.empty()
+
+if encode_button:
     if not user_input:
-        st.warning("Please enter some text to encode.")
+        status_placeholder.warning("Please enter some text to encode.")
     elif not uploaded_file:
-        st.warning("Please upload your 7to8.csv file.")
+        status_placeholder.warning("Please upload your 7to8.csv file.")
     else:
-        try:
-            # Save the uploaded file to a temporary location
-            with open("temp_7to8.csv", "wb") as f:
-                f.write(uploaded_file.getbuffer())
-            
-            # Load the encoding map from the uploaded CSV
-            encoding_map = load_7bit_to_8bit_mapping("temp_7to8.csv")
-            
-            # Encode the text to ACTG
-            actg_sequence = text_to_actg(user_input, encoding_map)
-            
-            # Display the encoded DNA sequence
-            st.subheader("Encoded DNA Sequence")
-            st.code(actg_sequence)
-            
-            # Calculate and display GC content
-            gc = gc_content(actg_sequence)
-            st.metric("GC Content", f"{gc:.2f}%")
-            
-        except Exception as e:
-            st.error(f"Error: {e}")
+        # Show spinner while processing
+        with st.spinner("Processing..."):
+            try:
+                # Create a debug section if enabled
+                debug_container = st.container() if show_debug else None
+                
+                # Save the uploaded file to a temporary location
+                temp_csv_path = "temp_7to8.csv"
+                with open(temp_csv_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                
+                if show_debug:
+                    with debug_container:
+                        st.subheader("Debug Information")
+                        st.write(f"Saved CSV to: {os.path.abspath(temp_csv_path)}")
+                        st.write(f"File size: {os.path.getsize(temp_csv_path)} bytes")
+                
+                # Load the encoding map from the uploaded CSV
+                encoding_map, error = safe_load_7bit_to_8bit_mapping(temp_csv_path)
+                
+                if error:
+                    if show_debug:
+                        with debug_container:
+                            st.error(f"Error loading mapping: {error}")
+                    status_placeholder.error("Error loading the CSV mapping file. Check the debug information.")
+                elif not encoding_map:
+                    status_placeholder.error("No valid mappings found in the CSV file.")
+                else:
+                    # Encode the text to ACTG
+                    actg_sequence = text_to_actg(user_input, encoding_map)
+                    
+                    # Display the encoded DNA sequence
+                    st.subheader("Encoded DNA Sequence")
+                    st.code(actg_sequence)
+                    
+                    # Calculate and display GC content
+                    gc = gc_content(actg_sequence)
+                    st.metric("GC Content", f"{gc:.2f}%")
+                    
+                    status_placeholder.success("Encoding completed successfully!")
+                    
+            except Exception as e:
+                error_details = traceback.format_exc()
+                status_placeholder.error(f"Error: {str(e)}")
+                
+                if show_debug:
+                    with debug_container:
+                        st.error("Full error details:")
+                        st.code(error_details)
