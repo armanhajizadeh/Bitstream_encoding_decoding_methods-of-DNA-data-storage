@@ -1,6 +1,6 @@
 import streamlit as st
 
-# Character to 7-bit binary mapping (unchanged from your original code)
+# Character to 7-bit binary mapping
 char_to_7bit = {
     'Y': '0000000', 'Q': '0000001', 'K': '0000010', '_': '0000011', '7': '0000100',
     'S': '0000101', '1': '0000110', '0': '0000111', '5': '0001000', '!': '0001001',
@@ -29,12 +29,22 @@ char_to_7bit = {
     '⇒': '1110111', '⇑': '1111000', '⇓': '1111001', '★': '1111010', '☆': '1111011',
     '♠': '1111100', '♣': '1111101', '♥': '1111110', '♦': '1111111'
 }
+
+# Create reverse mapping
 bin7_to_char = {v: k for k, v in char_to_7bit.items()}
 
-binary_to_dna = {'00': 'A', '01': 'C', '10': 'T', '11': 'G'}
+# Binary to ACTG mapping
+binary_to_dna = {
+    '00': 'A',
+    '01': 'C',
+    '10': 'T',
+    '11': 'G'
+}
+
+# Create reverse mapping
 dna_to_binary = {v: k for k, v in binary_to_dna.items()}
 
-# === HARDCODED 7-bit to 8-bit map ===
+# === HARDCODED 7-bit to 8-bit map (from your previously used CSV) ===
 encoding_map = {
     '0000000': '00100011',
     '0000001': '00010011',
@@ -166,51 +176,257 @@ encoding_map = {
     '1111111': '11110011'
 }
 
+# Create reverse mapping for decoding
 decoding_map = {v: k for k, v in encoding_map.items()}
 
 def binary_to_actg(binary_str):
+    """
+    Converts a binary string to ACTG format by grouping every 2 bits.
+    """
     if len(binary_str) % 2 != 0:
-        raise ValueError("Binary string length must be even.")
-    return ''.join(binary_to_dna[binary_str[i:i+2]] for i in range(0, len(binary_str), 2))
+        raise ValueError("Binary string length must be even for ACTG conversion.")
+
+    dna = ''
+    for i in range(0, len(binary_str), 2):
+        pair = binary_str[i:i+2]
+        dna += binary_to_dna[pair]
+
+    return dna
 
 def actg_to_binary(dna_str):
-    return ''.join(dna_to_binary[n] for n in dna_str)
+    """
+    Converts an ACTG string back to binary.
+    """
+    binary = ''
+    for nucleotide in dna_str:
+        if nucleotide not in dna_to_binary:
+            raise ValueError(f"Invalid nucleotide: {nucleotide}")
+        binary += dna_to_binary[nucleotide]
 
-def text_to_actg(text, encoding_map):
+    return binary
+
+def text_to_actg(text):
+    """
+    Converts text to ACTG DNA sequence using 7-bit to 8-bit encoding.
+    """
+    # Convert text to 7-bit binary
     binary_7bit = ''
     for char in text:
         if char not in char_to_7bit:
             raise ValueError(f"Unsupported character: {char}")
         binary_7bit += char_to_7bit[char]
 
+    # Convert 7-bit chunks to 8-bit encoded chunks
     binary_8bit = ''
     for i in range(0, len(binary_7bit), 7):
-        chunk = binary_7bit[i:i+7].ljust(7, '0')
-        binary_8bit += encoding_map[chunk]
+        chunk_7bit = binary_7bit[i:i+7]
+        # Handle the last chunk if it's incomplete
+        if len(chunk_7bit) < 7:
+            # Pad with zeros to make it 7 bits
+            chunk_7bit = chunk_7bit.ljust(7, '0')
 
-    return binary_to_actg(binary_8bit)
+        # Encode 7-bit to 8-bit using the hardcoded mapping
+        binary_8bit += encoding_map[chunk_7bit]
+
+    # Convert to ACTG (every 2 bits becomes 1 nucleotide)
+    actg = binary_to_actg(binary_8bit)
+
+    return actg
+
+def actg_to_text(actg):
+    """
+    Converts ACTG DNA sequence back to text using 8-bit to 7-bit decoding.
+    """
+    # Convert ACTG to binary
+    binary_8bit = actg_to_binary(actg)
+
+    # Ensure binary length is multiple of 8
+    if len(binary_8bit) % 8 != 0:
+        raise ValueError("Encoded binary length must be a multiple of 8 bits.")
+
+    # Convert 8-bit chunks to 7-bit chunks
+    binary_7bit = ''
+    for i in range(0, len(binary_8bit), 8):
+        chunk_8bit = binary_8bit[i:i+8]
+        if chunk_8bit in decoding_map:
+            binary_7bit += decoding_map[chunk_8bit]
+        else:
+            # Handle invalid 8-bit chunks
+            st.warning(f"Invalid 8-bit chunk detected: {chunk_8bit}")
+            # Skip this chunk or use a placeholder
+            binary_7bit += '0000000'  # Placeholder for invalid chunks
+
+    # Convert 7-bit chunks to characters
+    text = ''
+    for i in range(0, len(binary_7bit), 7):
+        chunk_7bit = binary_7bit[i:i+7]
+        if len(chunk_7bit) < 7:
+            break  # Incomplete chunk at the end, ignore
+
+        if chunk_7bit in bin7_to_char:
+            text += bin7_to_char[chunk_7bit]
+        else:
+            st.warning(f"Invalid 7-bit chunk detected: {chunk_7bit}")
+            text += '?'  # Replace with a question mark
+
+    return text
 
 def gc_content(seq):
+    """
+    Calculates the GC content percentage of a DNA sequence.
+    """
     if not seq:
         return 0.0
-    gc = seq.count('G') + seq.count('C')
-    return (gc / len(seq)) * 100.0
 
-# === Streamlit App UI ===
+    gc_count = seq.count('G') + seq.count('C')
+    return (gc_count / len(seq)) * 100.0
 
-st.title("Text to DNA (ACTG) Encoder")
+def check_triple_nucleotides(seq):
+    """
+    Checks a DNA sequence for the presence of triple nucleotides (AAA, CCC, TTT, GGG).
+    Returns a dictionary with counts and positions of each triple nucleotide.
+    """
+    result = {}
+    patterns = ['AAA', 'CCC', 'TTT', 'GGG']
 
-user_input = st.text_area("Enter your text:")
+    for pattern in patterns:
+        # Find all occurrences of the pattern
+        occurrences = []
+        start_pos = 0
 
-if user_input:
-    try:
-        actg = text_to_actg(user_input, encoding_map)
-        gc = gc_content(actg)
+        while True:
+            pos = seq.find(pattern, start_pos)
+            if pos == -1:
+                break
+            occurrences.append(pos)
+            start_pos = pos + 1  # Overlap allowed
 
-        st.subheader("ACTG Sequence")
-        st.code(actg)
+        result[pattern] = {
+            'count': len(occurrences),
+            'positions': occurrences
+        }
 
-        st.subheader("GC Content")
-        st.write(f"{gc:.2f}%")
-    except Exception as e:
-        st.error(f"Error: {e}")
+    # Calculate total number of triple nucleotides
+    result['total_count'] = sum(result[pattern]['count'] for pattern in patterns)
+
+    return result
+
+# Streamlit UI
+st.title("Text to DNA (ACTG) Encoder/Decoder")
+
+# Create tabs for encoding and decoding
+tab1, tab2 = st.tabs(["Encode Text to DNA", "Decode DNA to Text"])
+
+with tab1:
+    st.header("Text to DNA Conversion")
+    
+    # Text input for encoding
+    user_input = st.text_area("Enter your text to encode:", height=150)
+    
+    if st.button("Encode to DNA"):
+        if user_input:
+            try:
+                # Encode the text to ACTG
+                actg_sequence = text_to_actg(user_input)
+                
+                # Display the encoded DNA sequence
+                st.subheader("Encoded DNA Sequence")
+                st.code(actg_sequence)
+                
+                # Display sequence length
+                st.info(f"Sequence length: {len(actg_sequence)} nucleotides")
+                
+                # Calculate and display GC content
+                gc = gc_content(actg_sequence)
+                st.metric("GC Content", f"{gc:.2f}%")
+                
+                # Check for triple nucleotides
+                triple_check = check_triple_nucleotides(actg_sequence)
+                
+                st.subheader("Triple Nucleotide Analysis")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("Total Triple Repeats", triple_check['total_count'])
+                    
+                with col2:
+                    # Create a simple bar chart for triple nucleotide counts
+                    import matplotlib.pyplot as plt
+                    import numpy as np
+                    
+                    patterns = ['AAA', 'CCC', 'TTT', 'GGG']
+                    counts = [triple_check[p]['count'] for p in patterns]
+                    
+                    fig, ax = plt.subplots()
+                    bars = ax.bar(patterns, counts)
+                    
+                    # Add count labels on top of bars
+                    for bar, count in zip(bars, counts):
+                        height = bar.get_height()
+                        ax.text(bar.get_x() + bar.get_width()/2., height + 0.1,
+                                str(count), ha='center', va='bottom')
+                    
+                    ax.set_ylabel('Count')
+                    ax.set_title('Triple Nucleotide Distribution')
+                    
+                    st.pyplot(fig)
+                
+                # Display detailed positions of triple nucleotides if any were found
+                if triple_check['total_count'] > 0:
+                    st.subheader("Detailed Triple Nucleotide Positions")
+                    for pattern in patterns:
+                        count = triple_check[pattern]['count']
+                        positions = triple_check[pattern]['positions']
+                        
+                        if count > 0:
+                            with st.expander(f"{pattern}: {count} occurrences"):
+                                st.write(f"Positions: {positions}")
+                
+            except ValueError as e:
+                st.error(f"Error: {str(e)}")
+        else:
+            st.warning("Please enter some text to encode.")
+
+with tab2:
+    st.header("DNA to Text Conversion")
+    
+    # DNA input for decoding
+    dna_input = st.text_area("Enter DNA sequence to decode (ACTG only):", height=150)
+    
+    if st.button("Decode to Text"):
+        if dna_input:
+            # Validate input (only ACTG allowed)
+            if not all(n in 'ACTG' for n in dna_input):
+                st.error("Invalid DNA sequence. Only characters A, C, T, and G are allowed.")
+            else:
+                try:
+                    # Decode the DNA to text
+                    decoded_text = actg_to_text(dna_input)
+                    
+                    # Display the decoded text
+                    st.subheader("Decoded Text")
+                    st.text_area("Decoded result:", value=decoded_text, height=150, disabled=True)
+                    
+                except ValueError as e:
+                    st.error(f"Error: {str(e)}")
+        else:
+            st.warning("Please enter a DNA sequence to decode.")
+
+# Add an "About" section
+with st.expander("About this App"):
+    st.write("""
+    This app converts text to DNA sequences and vice versa using a specialized encoding technique:
+    
+    1. **Text to 7-bit Binary**: Each character is converted to a 7-bit binary representation.
+    2. **7-bit to 8-bit Conversion**: The 7-bit sequences are encoded to 8-bit sequences using a specialized mapping.
+    3. **Binary to DNA**: Every 2 bits are converted to a DNA nucleotide (A, C, T, G).
+    
+    The encoding is designed to optimize for DNA storage properties such as balanced GC content
+    and minimized homopolymer runs (AAA, CCC, TTT, GGG).
+    
+    To use the app:
+    - Enter text in the "Encode" tab to convert it to a DNA sequence
+    - Enter a DNA sequence (ACTG only) in the "Decode" tab to convert it back to text
+    
+    Note: Special characters outside the supported character set cannot be encoded.
+    """)
