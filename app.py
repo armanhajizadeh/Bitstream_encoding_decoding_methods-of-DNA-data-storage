@@ -46,13 +46,16 @@ def load_7bit_to_8bit_mapping(csv_filename):
     Returns the mapping as a dictionary.
     """
     encoding_map = {}
-    with open(csv_filename, 'r', newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        header = next(reader, None)  # Skip header if exists
-        
-        for row in reader:
-            if len(row) >= 2:
-                encoding_map[row[0]] = row[1]
+    try:
+        with open(csv_filename, 'r', newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            header = next(reader, None)  # Skip header if exists
+            
+            for row in reader:
+                if len(row) >= 2:
+                    encoding_map[row[0]] = row[1]
+    except Exception as e:
+        st.error(f"Error loading CSV file: {str(e)}")
     
     return encoding_map
 
@@ -90,7 +93,11 @@ def text_to_actg(text, encoding_map):
             chunk_7bit = chunk_7bit.ljust(7, '0')
         
         # Encode 7-bit to 8-bit using the mapping
-        binary_8bit += encoding_map[chunk_7bit]
+        if chunk_7bit in encoding_map:
+            binary_8bit += encoding_map[chunk_7bit]
+        else:
+            st.warning(f"Missing mapping for 7-bit chunk: {chunk_7bit}. Using default padding.")
+            binary_8bit += '00000000'  # Default padding
     
     # Convert to ACTG (every 2 bits becomes 1 nucleotide)
     actg = binary_to_actg(binary_8bit)
@@ -112,24 +119,44 @@ st.title("Text to DNA (ACTG) Encoder")
 # Text input
 user_input = st.text_area("Enter your text to encode:", height=150)
 
-# File uploader for the mapping file
-uploaded_file = st.file_uploader("Upload your 7to8.csv file", type=['csv'])
+# Path to the CSV file in the repository
+csv_file_path = "7to8.csv"  # Change this to the actual path of your CSV file
+
+# Option to use custom CSV file
+use_custom_csv = st.checkbox("Use custom 7to8.csv file", value=False)
+
+if use_custom_csv:
+    # File uploader for custom mapping file
+    uploaded_file = st.file_uploader("Upload your 7to8.csv file", type=['csv'])
+else:
+    uploaded_file = None
 
 # Encode button
 if st.button("Encode to DNA"):
     if not user_input:
         st.warning("Please enter some text to encode.")
-    elif not uploaded_file:
-        st.warning("Please upload your 7to8.csv file.")
     else:
         try:
-            # Save uploaded file to a temporary file
-            temp_file = "temp_7to8.csv"
-            with open(temp_file, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-            
-            # Load the mapping
-            encoding_map = load_7bit_to_8bit_mapping(temp_file)
+            # Determine which CSV file to use
+            if use_custom_csv and uploaded_file:
+                # Save uploaded file to a temporary file
+                temp_file = "temp_7to8.csv"
+                with open(temp_file, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                
+                # Load the mapping from uploaded file
+                encoding_map = load_7bit_to_8bit_mapping(temp_file)
+                
+                # Clean up temporary file
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+            else:
+                # Load the mapping from repository file
+                if os.path.exists(csv_file_path):
+                    encoding_map = load_7bit_to_8bit_mapping(csv_file_path)
+                else:
+                    st.error(f"CSV file not found at path: {csv_file_path}")
+                    encoding_map = {}
             
             # Check if mapping loaded successfully
             if not encoding_map:
@@ -145,10 +172,6 @@ if st.button("Encode to DNA"):
                 # Calculate and display GC content
                 gc = gc_content(actg_sequence)
                 st.metric("GC Content", f"{gc:.2f}%")
-            
-            # Clean up temporary file
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
                 
         except Exception as e:
             st.error(f"Error: {str(e)}")
