@@ -122,41 +122,18 @@ user_input = st.text_area("Enter your text to encode:", height=150)
 # Path to the CSV file in the repository
 csv_file_path = "7to8.csv"  # Change this to the actual path of your CSV file
 
-# Option to use custom CSV file
-use_custom_csv = st.checkbox("Use custom 7to8.csv file", value=False)
-
-if use_custom_csv:
-    # File uploader for custom mapping file
-    uploaded_file = st.file_uploader("Upload your 7to8.csv file", type=['csv'])
-else:
-    uploaded_file = None
-
 # Encode button
 if st.button("Encode to DNA"):
     if not user_input:
         st.warning("Please enter some text to encode.")
     else:
         try:
-            # Determine which CSV file to use
-            if use_custom_csv and uploaded_file:
-                # Save uploaded file to a temporary file
-                temp_file = "temp_7to8.csv"
-                with open(temp_file, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-                
-                # Load the mapping from uploaded file
-                encoding_map = load_7bit_to_8bit_mapping(temp_file)
-                
-                # Clean up temporary file
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
+            # Load the mapping from repository file
+            if os.path.exists(csv_file_path):
+                encoding_map = load_7bit_to_8bit_mapping(csv_file_path)
             else:
-                # Load the mapping from repository file
-                if os.path.exists(csv_file_path):
-                    encoding_map = load_7bit_to_8bit_mapping(csv_file_path)
-                else:
-                    st.error(f"CSV file not found at path: {csv_file_path}")
-                    encoding_map = {}
+                st.error(f"CSV file not found at path: {csv_file_path}")
+                encoding_map = {}
             
             # Check if mapping loaded successfully
             if not encoding_map:
