@@ -14,19 +14,102 @@ st.set_page_config(
     }
 )
 
-# Apply Courier New font styling and add animated DNA helix
-st.markdown("""
+# Define DNA animation HTML - this is a simpler animation that will definitely display
+dna_animation_html = """
 <style>
-    /* Set Courier New as the default font for the entire app */
+    /* DNA animation container */
+    .dna-animation-container {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 100px;
+        overflow: hidden;
+        z-index: 1000;
+    }
+    
+    /* DNA strand styling */
+    .dna-strand {
+        position: absolute;
+        left: 40px;
+        top: 10px;
+        bottom: 10px;
+        width: 20px;
+        animation: dna-float 10s infinite linear;
+    }
+    
+    /* Basepair styling */
+    .base-pair {
+        position: absolute;
+        width: 60px;
+        height: 5px;
+        background: linear-gradient(to right, #00CED1, #20B2AA);
+        left: -20px;
+        border-radius: 10px;
+        opacity: 0.8;
+    }
+    
+    /* Left nucleotide */
+    .base-pair::before {
+        content: "";
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #20B2AA;
+        left: -5px;
+        top: -3px;
+    }
+    
+    /* Right nucleotide */
+    .base-pair::after {
+        content: "";
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #008B8B;
+        right: -5px;
+        top: -3px;
+    }
+    
+    /* Alternate base pairs */
+    .base-pair:nth-child(even) {
+        transform: rotate(30deg);
+    }
+    
+    .base-pair:nth-child(odd) {
+        transform: rotate(-30deg);
+    }
+    
+    /* Animation keyframes */
+    @keyframes dna-float {
+        0% {
+            transform: translateY(0) rotate(0deg);
+        }
+        100% {
+            transform: translateY(-50%) rotate(360deg);
+        }
+    }
+    
+    /* Offset for main content */
+    .main-content {
+        margin-left: 80px;
+    }
+    
+    /* Ensure Courier New as the default font */
     html, body, [class*="st-"] {
         font-family: 'Courier New', monospace;
     }
+    
+    /* Title styling */
     .main-title {
         font-size: 2.2rem;
         margin-bottom: 1rem;
         text-align: center;
         font-family: 'Courier New', monospace;
     }
+    
     .subtitle {
         font-size: 1.2rem;
         margin-bottom: 2rem;
@@ -34,303 +117,40 @@ st.markdown("""
         color: #666;
         font-family: 'Courier New', monospace;
     }
+    
     /* Hide most of the default header */
     header {
         visibility: hidden;
     }
+    
     /* Keep only the "Share" button visible */
     header button:last-child {
         visibility: visible;
     }
+    
     /* Hide hamburger menu */
     section[data-testid="stSidebar"] {
         display: none;
     }
-    
-    /* DNA Animation Styles */
-    .dna-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: 100px;
-        overflow: hidden;
-        opacity: 0.7;
-        pointer-events: none;
-        z-index: -1;
-    }
-    
-    .dna-helix {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        animation: rotate 20s linear infinite;
-    }
-    
-    @keyframes rotate {
-        0% {
-            transform: translateY(-50%) rotateX(0deg);
-        }
-        100% {
-            transform: translateY(-50%) rotateX(360deg);
-        }
-    }
-    
-    .strand {
-        position: absolute;
-        width: 2px;
-        height: 100%;
-        left: 40px;
-        background: linear-gradient(to bottom, 
-            rgba(0,0,0,0) 0%, 
-            rgba(32,178,170,0.7) 20%, 
-            rgba(0,128,128,0.7) 50%, 
-            rgba(32,178,170,0.7) 80%, 
-            rgba(0,0,0,0) 100%);
-        transform-style: preserve-3d;
-    }
-    
-    .strand:nth-child(1) {
-        transform: rotateY(0deg);
-    }
-    
-    .strand:nth-child(2) {
-        transform: rotateY(180deg);
-    }
-    
-    .rung {
-        position: absolute;
-        left: -18px;
-        width: 40px;
-        height: 2px;
-        background: linear-gradient(to right, 
-            rgba(32,178,170,0.7) 0%, 
-            rgba(0,128,128,0.7) 50%, 
-            rgba(32,178,170,0.7) 100%);
-    }
-    
-    /* Create 20 rungs along the DNA helix */
-    .strand:nth-child(1) .rung:nth-child(1) { top: 5%; background-color: #20B2AA; }
-    .strand:nth-child(1) .rung:nth-child(2) { top: 10%; background-color: #008B8B; }
-    .strand:nth-child(1) .rung:nth-child(3) { top: 15%; background-color: #20B2AA; }
-    .strand:nth-child(1) .rung:nth-child(4) { top: 20%; background-color: #008B8B; }
-    .strand:nth-child(1) .rung:nth-child(5) { top: 25%; background-color: #20B2AA; }
-    .strand:nth-child(1) .rung:nth-child(6) { top: 30%; background-color: #008B8B; }
-    .strand:nth-child(1) .rung:nth-child(7) { top: 35%; background-color: #20B2AA; }
-    .strand:nth-child(1) .rung:nth-child(8) { top: 40%; background-color: #008B8B; }
-    .strand:nth-child(1) .rung:nth-child(9) { top: 45%; background-color: #20B2AA; }
-    .strand:nth-child(1) .rung:nth-child(10) { top: 50%; background-color: #008B8B; }
-    .strand:nth-child(1) .rung:nth-child(11) { top: 55%; background-color: #20B2AA; }
-    .strand:nth-child(1) .rung:nth-child(12) { top: 60%; background-color: #008B8B; }
-    .strand:nth-child(1) .rung:nth-child(13) { top: 65%; background-color: #20B2AA; }
-    .strand:nth-child(1) .rung:nth-child(14) { top: 70%; background-color: #008B8B; }
-    .strand:nth-child(1) .rung:nth-child(15) { top: 75%; background-color: #20B2AA; }
-    .strand:nth-child(1) .rung:nth-child(16) { top: 80%; background-color: #008B8B; }
-    .strand:nth-child(1) .rung:nth-child(17) { top: 85%; background-color: #20B2AA; }
-    .strand:nth-child(1) .rung:nth-child(18) { top: 90%; background-color: #008B8B; }
-    .strand:nth-child(1) .rung:nth-child(19) { top: 95%; background-color: #20B2AA; }
-    .strand:nth-child(1) .rung:nth-child(20) { top: 100%; background-color: #008B8B; }
-    
-    .nucleotide {
-        position: absolute;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-    }
-    
-    .nucleotide.a { background-color: #20B2AA; }
-    .nucleotide.t { background-color: #008B8B; }
-    .nucleotide.g { background-color: #5F9EA0; }
-    .nucleotide.c { background-color: #48D1CC; }
-    
-    .rung .nucleotide:nth-child(1) {
-        left: -8px;
-        top: -3px;
-    }
-    
-    .rung .nucleotide:nth-child(2) {
-        right: -8px;
-        top: -3px;
-    }
-    
-    /* Content padding to make room for DNA */
-    .main-content {
-        margin-left: 80px;
-    }
 </style>
 
-<!-- Animated DNA Helix HTML Structure -->
-<div class="dna-container">
-    <div class="dna-helix">
-        <div class="strand">
-            <div class="rung">
-                <div class="nucleotide a"></div>
-                <div class="nucleotide t"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide g"></div>
-                <div class="nucleotide c"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide t"></div>
-                <div class="nucleotide a"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide c"></div>
-                <div class="nucleotide g"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide a"></div>
-                <div class="nucleotide t"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide g"></div>
-                <div class="nucleotide c"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide t"></div>
-                <div class="nucleotide a"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide c"></div>
-                <div class="nucleotide g"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide a"></div>
-                <div class="nucleotide t"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide g"></div>
-                <div class="nucleotide c"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide a"></div>
-                <div class="nucleotide t"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide g"></div>
-                <div class="nucleotide c"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide t"></div>
-                <div class="nucleotide a"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide c"></div>
-                <div class="nucleotide g"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide a"></div>
-                <div class="nucleotide t"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide g"></div>
-                <div class="nucleotide c"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide t"></div>
-                <div class="nucleotide a"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide c"></div>
-                <div class="nucleotide g"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide a"></div>
-                <div class="nucleotide t"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide g"></div>
-                <div class="nucleotide c"></div>
-            </div>
-        </div>
-        <div class="strand">
-            <div class="rung">
-                <div class="nucleotide t"></div>
-                <div class="nucleotide a"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide c"></div>
-                <div class="nucleotide g"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide a"></div>
-                <div class="nucleotide t"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide g"></div>
-                <div class="nucleotide c"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide t"></div>
-                <div class="nucleotide a"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide c"></div>
-                <div class="nucleotide g"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide a"></div>
-                <div class="nucleotide t"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide g"></div>
-                <div class="nucleotide c"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide t"></div>
-                <div class="nucleotide a"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide c"></div>
-                <div class="nucleotide g"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide t"></div>
-                <div class="nucleotide a"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide c"></div>
-                <div class="nucleotide g"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide a"></div>
-                <div class="nucleotide t"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide g"></div>
-                <div class="nucleotide c"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide t"></div>
-                <div class="nucleotide a"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide c"></div>
-                <div class="nucleotide g"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide a"></div>
-                <div class="nucleotide t"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide g"></div>
-                <div class="nucleotide c"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide t"></div>
-                <div class="nucleotide a"></div>
-            </div>
-            <div class="rung">
-                <div class="nucleotide c"></div>
-                <div class="nucleotide g"></div>
-            </div>
-        </div>
+<div class="dna-animation-container">
+    <div class="dna-strand">
+"""
+
+# Generate 40 base pairs for the DNA animation
+for i in range(40):
+    dna_animation_html += f'<div class="base-pair" style="top: {i * 20}px;"></div>\n'
+
+dna_animation_html += """
     </div>
 </div>
 
 <div class="main-content">
-""", unsafe_allow_html=True)
+"""
+
+# Apply the styles and DNA animation
+st.markdown(dna_animation_html, unsafe_allow_html=True)
 
 # Character to 7-bit binary mapping
 char_to_7bit = {
