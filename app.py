@@ -14,7 +14,7 @@ st.set_page_config(
     }
 )
 
-# Define DNA animation HTML - more realistic rotating DNA in the last quarter of the page
+# Define DNA animation HTML - now positioned at the far left side
 dna_animation_html = """
 <style>
     /* Base styling */
@@ -52,12 +52,12 @@ dna_animation_html = """
         display: none;
     }
     
-    /* Realistic DNA styling */
+    /* Realistic DNA styling - moved to left edge */
     .dna-container {
         position: fixed;
         bottom: 20px;
-        left: 20px;
-        width: 150px;
+        left: 0;
+        width: 100px;
         height: 300px;
         perspective: 800px;
         z-index: 1000;
@@ -85,7 +85,7 @@ dna_animation_html = """
         position: absolute;
         width: 6px;
         height: 100%;
-        left: 72px;
+        left: 45px; /* Centered in the container */
         background: linear-gradient(to bottom, 
             rgba(0,206,209,0.7) 0%, 
             rgba(32,178,170,0.9) 50%, 
@@ -157,6 +157,11 @@ dna_animation_html = """
     
     .base-pair:nth-child(4n+4)::before { background-color: #00FFFF; }
     .base-pair:nth-child(4n+4)::after { background-color: #00B2B2; }
+    
+    /* Add padding to main content to avoid overlap with DNA */
+    .main-content {
+        margin-left: 60px;
+    }
 </style>
 
 <div class="dna-container">
@@ -183,6 +188,8 @@ dna_animation_html += """
         </div>
     </div>
 </div>
+
+<div class="main-content">
 """
 
 # Apply the styles and DNA animation
@@ -351,3 +358,6 @@ if encode_button:
 # Footer information
 st.markdown("---")
 st.markdown('<p style="text-align:center; color:#888; font-size:0.8rem;">DNA Encoding Tool - Using biological molecules to store digital information</p>', unsafe_allow_html=True)
+
+# Close the main content div
+st.markdown('</div>', unsafe_allow_html=True)
