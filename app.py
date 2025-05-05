@@ -2,6 +2,45 @@ import streamlit as st
 import csv
 import os
 
+# Set page configuration
+st.set_page_config(
+    page_title="DNA Encoder",
+    page_icon="🧬",
+    layout="wide"
+)
+
+# Apply custom CSS for font options
+st.markdown("""
+<style>
+.font-roboto {
+    font-family: 'Roboto', sans-serif;
+}
+.font-montserrat {
+    font-family: 'Montserrat', sans-serif;
+}
+.font-open-sans {
+    font-family: 'Open Sans', sans-serif;
+}
+.font-lato {
+    font-family: 'Lato', sans-serif;
+}
+.font-courier {
+    font-family: 'Courier New', monospace;
+}
+.main-title {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+.subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #666;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Character to 7-bit binary mapping
 char_to_7bit = {
     'Y': '0000000', 'Q': '0000001', 'K': '0000010', '_': '0000011', '7': '0000100',
@@ -113,8 +152,25 @@ def gc_content(seq):
     gc = seq.count('G') + seq.count('C')
     return (gc / len(seq)) * 100.0
 
-# Set up the Streamlit interface
-st.title("Did you ever wonder how your name would be stored on our biological hard disk?")
+# Font selection sidebar
+font_options = {
+    "Roboto": "font-roboto",
+    "Montserrat": "font-montserrat",
+    "Open Sans": "font-open-sans",
+    "Lato": "font-lato",
+    "Courier New": "font-courier"
+}
+
+with st.sidebar:
+    st.header("Settings")
+    selected_font = st.selectbox("Choose a font", list(font_options.keys()))
+
+# Set up the Streamlit interface with the selected font
+font_class = font_options[selected_font]
+
+# Custom title with the selected font
+st.markdown(f'<div class="{font_class}"><h1 class="main-title">Have you ever wondered how your name would be stored on a biological hard disk?</h1></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="{font_class}"><p class="subtitle">Enter text below to encode it into DNA (ACTG) sequences</p></div>', unsafe_allow_html=True)
 
 # Text input
 user_input = st.text_area("Enter your text to encode:", height=150)
@@ -122,8 +178,13 @@ user_input = st.text_area("Enter your text to encode:", height=150)
 # Path to the CSV file in the repository
 csv_file_path = "7to8.csv"  # Change this to the actual path of your CSV file
 
-# Encode button
-if st.button("Encode to DNA"):
+# Create two columns for button and result
+col1, col2 = st.columns([1, 3])
+
+with col1:
+    encode_button = st.button("Encode to DNA")
+
+if encode_button:
     if not user_input:
         st.warning("Please enter some text to encode.")
     else:
@@ -143,12 +204,19 @@ if st.button("Encode to DNA"):
                 actg_sequence = text_to_actg(user_input, encoding_map)
                 
                 # Display results
-                st.subheader("Encoded DNA Sequence")
+                st.markdown(f'<div class="{font_class}"><h2>Encoded DNA Sequence</h2></div>', unsafe_allow_html=True)
                 st.code(actg_sequence)
                 
                 # Calculate and display GC content
                 gc = gc_content(actg_sequence)
                 st.metric("GC Content", f"{gc:.2f}%")
                 
+                # Additional explanation
+                st.markdown(f'<div class="{font_class}"><p>This sequence represents how your text would be stored in a DNA-based storage system!</p></div>', unsafe_allow_html=True)
+                
         except Exception as e:
             st.error(f"Error: {str(e)}")
+
+# Footer information
+st.markdown("---")
+st.markdown(f'<div class="{font_class}"><p style="text-align:center; color:#888; font-size:0.8rem;">DNA Encoding Tool - Using biological molecules to store digital information</p></div>', unsafe_allow_html=True)
