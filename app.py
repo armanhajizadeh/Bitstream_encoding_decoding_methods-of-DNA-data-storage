@@ -114,7 +114,7 @@ def gc_content(seq):
     return (gc / len(seq)) * 100.0
 
 # Set up the Streamlit interface
-st.title("Text to DNA (ACTG) Encoder")
+st.title("Did you ever wonder how your name would be stored on our biological hard disk?")
 
 # Text input
 user_input = st.text_area("Enter your text to encode:", height=150)
