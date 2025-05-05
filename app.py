@@ -174,7 +174,7 @@ encoding_map = {
     '1111111': '11110011'
 }
 
-# Create reverse mapping for decoding
+# Create decoding map
 decoding_map = {v: k for k, v in encoding_map.items()}
 
 def binary_to_actg(binary_str):
@@ -249,7 +249,7 @@ user_input = st.text_area("Enter your text to encode:", height=150)
 if st.button("Encode to DNA"):
     if user_input:
         try:
-            # Encode the text to ACTG (passing the encoding_map as a parameter)
+            # Encode the text to ACTG with the encoding_map parameter
             actg_sequence = text_to_actg(user_input, encoding_map)
             
             # Display the encoded DNA sequence
