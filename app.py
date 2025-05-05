@@ -14,7 +14,7 @@ st.set_page_config(
     }
 )
 
-# Define DNA animation HTML - now positioned at the far left side
+# Define DNA animation HTML - enhanced with more realistic features
 dna_animation_html = """
 <style>
     /* Base styling */
@@ -52,145 +52,266 @@ dna_animation_html = """
         display: none;
     }
     
-    /* Realistic DNA styling - moved to left edge */
+    /* Enhanced realistic DNA styling */
     .dna-container {
         position: fixed;
-        bottom: 20px;
+        top: 0;
         left: 0;
-        width: 100px;
-        height: 300px;
-        perspective: 800px;
+        height: 100%;
+        width: 90px;
+        perspective: 1200px;
         z-index: 1000;
     }
     
     .dna-helix {
         position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         width: 100%;
-        height: 100%;
+        height: 80%;
         transform-style: preserve-3d;
-        animation: rotate 15s linear infinite;
+        animation: dna-rotate 20s linear infinite;
     }
     
-    @keyframes rotate {
+    @keyframes dna-rotate {
         0% {
-            transform: rotateY(0deg);
+            transform: translate(-50%, -50%) rotateY(0deg) rotateX(10deg);
+        }
+        50% {
+            transform: translate(-50%, -50%) rotateY(180deg) rotateX(-10deg);
         }
         100% {
-            transform: rotateY(360deg);
+            transform: translate(-50%, -50%) rotateY(360deg) rotateX(10deg);
         }
     }
     
-    /* Create the two strands */
+    /* Create the backbone strands with more depth */
     .strand {
         position: absolute;
-        width: 6px;
+        width: 8px;
         height: 100%;
-        left: 45px; /* Centered in the container */
+        border-radius: 4px;
+        box-shadow: 0 0 5px rgba(0, 191, 255, 0.5);
+    }
+    
+    .strand.left {
+        left: 30%;
         background: linear-gradient(to bottom, 
-            rgba(0,206,209,0.7) 0%, 
-            rgba(32,178,170,0.9) 50%, 
-            rgba(0,206,209,0.7) 100%);
-        border-radius: 5px;
+            rgba(0, 120, 215, 0.2), 
+            rgba(0, 180, 216, 0.9) 10%, 
+            rgba(32, 178, 170, 0.8) 50%, 
+            rgba(0, 180, 216, 0.9) 90%, 
+            rgba(0, 120, 215, 0.2));
+        transform-origin: center;
+        animation: strand-pulse 4s ease-in-out infinite alternate;
     }
     
-    .strand:nth-child(1) {
-        transform: translateX(-20px) rotateY(0deg);
+    .strand.right {
+        left: 70%;
+        background: linear-gradient(to bottom, 
+            rgba(0, 120, 215, 0.2), 
+            rgba(0, 139, 139, 0.9) 10%, 
+            rgba(0, 206, 209, 0.8) 50%, 
+            rgba(0, 139, 139, 0.9) 90%, 
+            rgba(0, 120, 215, 0.2));
+        transform-origin: center;
+        animation: strand-pulse 4s ease-in-out infinite alternate-reverse;
     }
     
-    .strand:nth-child(2) {
-        transform: translateX(20px) rotateY(180deg);
+    @keyframes strand-pulse {
+        0% {
+            opacity: 0.8;
+            box-shadow: 0 0 5px rgba(0, 191, 255, 0.5);
+        }
+        50% {
+            opacity: 1;
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.7);
+        }
+        100% {
+            opacity: 0.8;
+            box-shadow: 0 0 5px rgba(0, 191, 255, 0.5);
+        }
     }
     
-    /* Create the base pairs (rungs) */
+    /* Base pairs with improved styling */
     .base-pair {
         position: absolute;
-        width: 40px;
-        height: 5px;
-        left: -17px;
-        border-radius: 5px;
+        width: 40%;
+        height: 3px;
+        left: 30%;
+        border-radius: 3px;
+        transform-style: preserve-3d;
+        box-shadow: 0 0 2px rgba(255, 255, 255, 0.7);
     }
     
-    /* Different colors for base pairs */
-    .base-pair:nth-child(4n+1) {
+    /* Different base pair types with scientific color coding */
+    .base-pair.at {
+        background: linear-gradient(to right, #48D1CC, #20B2AA);
+        animation: glow-at 3s infinite alternate;
+    }
+    
+    .base-pair.ta {
         background: linear-gradient(to right, #20B2AA, #48D1CC);
+        animation: glow-ta 3s infinite alternate;
     }
     
-    .base-pair:nth-child(4n+2) {
-        background: linear-gradient(to right, #00CED1, #5F9EA0);
+    .base-pair.gc {
+        background: linear-gradient(to right, #00BFFF, #1E90FF);
+        animation: glow-gc 3s infinite alternate;
     }
     
-    .base-pair:nth-child(4n+3) {
-        background: linear-gradient(to right, #008B8B, #40E0D0);
+    .base-pair.cg {
+        background: linear-gradient(to right, #1E90FF, #00BFFF);
+        animation: glow-cg 3s infinite alternate;
     }
     
-    .base-pair:nth-child(4n+4) {
-        background: linear-gradient(to right, #00FFFF, #00B2B2);
+    @keyframes glow-at {
+        0% { box-shadow: 0 0 2px rgba(72, 209, 204, 0.5); }
+        100% { box-shadow: 0 0 5px rgba(72, 209, 204, 0.8); }
     }
     
-    /* Create nucleotides at the ends of base pairs */
-    .base-pair::before, .base-pair::after {
-        content: "";
+    @keyframes glow-ta {
+        0% { box-shadow: 0 0 2px rgba(32, 178, 170, 0.5); }
+        100% { box-shadow: 0 0 5px rgba(32, 178, 170, 0.8); }
+    }
+    
+    @keyframes glow-gc {
+        0% { box-shadow: 0 0 2px rgba(0, 191, 255, 0.5); }
+        100% { box-shadow: 0 0 5px rgba(0, 191, 255, 0.8); }
+    }
+    
+    @keyframes glow-cg {
+        0% { box-shadow: 0 0 2px rgba(30, 144, 255, 0.5); }
+        100% { box-shadow: 0 0 5px rgba(30, 144, 255, 0.8); }
+    }
+    
+    /* Nucleotide bases with enhanced style */
+    .nucleotide {
         position: absolute;
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         top: -3px;
+        box-shadow: 0 0 3px rgba(255, 255, 255, 0.6);
     }
     
-    .base-pair::before {
-        left: -5px;
+    .nucleotide.a {
+        background-color: #48D1CC;
+        left: -4px;
     }
     
-    .base-pair::after {
-        right: -5px;
+    .nucleotide.t {
+        background-color: #20B2AA;
+        right: -4px;
     }
     
-    /* Different colors for nucleotides */
-    .base-pair:nth-child(4n+1)::before { background-color: #20B2AA; }
-    .base-pair:nth-child(4n+1)::after { background-color: #48D1CC; }
+    .nucleotide.g {
+        background-color: #00BFFF;
+        left: -4px;
+    }
     
-    .base-pair:nth-child(4n+2)::before { background-color: #00CED1; }
-    .base-pair:nth-child(4n+2)::after { background-color: #5F9EA0; }
+    .nucleotide.c {
+        background-color: #1E90FF;
+        right: -4px;
+    }
     
-    .base-pair:nth-child(4n+3)::before { background-color: #008B8B; }
-    .base-pair:nth-child(4n+3)::after { background-color: #40E0D0; }
-    
-    .base-pair:nth-child(4n+4)::before { background-color: #00FFFF; }
-    .base-pair:nth-child(4n+4)::after { background-color: #00B2B2; }
+    /* Add small particle effect to simulate water molecules */
+    .water-particle {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background-color: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        pointer-events: none;
+    }
     
     /* Add padding to main content to avoid overlap with DNA */
     .main-content {
-        margin-left: 60px;
+        margin-left: 80px;
     }
 </style>
 
 <div class="dna-container">
     <div class="dna-helix">
-        <div class="strand">
+        <div class="strand left"></div>
+        <div class="strand right"></div>
 """
 
-# Generate 16 base pairs for strand 1
-for i in range(16):
-    angle = i * (360 / 16)
-    dna_animation_html += f'<div class="base-pair" style="top: {i * 18}px; transform: rotateY({angle}deg);"></div>\n'
+# Generate 30 base pairs with alternating types (AT and GC)
+types = ['at', 'gc', 'ta', 'cg']
+num_base_pairs = 30
+spacing = 100 / num_base_pairs
 
-dna_animation_html += """
+for i in range(num_base_pairs):
+    pair_type = types[i % 4]
+    y_pos = i * spacing
+    rotation = i * (720 / num_base_pairs)  # 720 degrees = 2 full turns for helix effect
+    
+    if pair_type == 'at':
+        dna_animation_html += f'''
+        <div class="base-pair at" style="top: {y_pos}%; transform: rotateY({rotation}deg);">
+            <div class="nucleotide a"></div>
+            <div class="nucleotide t"></div>
         </div>
-        <div class="strand">
-"""
-
-# Generate 16 base pairs for strand 2
-for i in range(16):
-    angle = i * (360 / 16)
-    dna_animation_html += f'<div class="base-pair" style="top: {i * 18}px; transform: rotateY({angle}deg);"></div>\n'
-
-dna_animation_html += """
+        '''
+    elif pair_type == 'ta':
+        dna_animation_html += f'''
+        <div class="base-pair ta" style="top: {y_pos}%; transform: rotateY({rotation}deg);">
+            <div class="nucleotide t"></div>
+            <div class="nucleotide a"></div>
         </div>
+        '''
+    elif pair_type == 'gc':
+        dna_animation_html += f'''
+        <div class="base-pair gc" style="top: {y_pos}%; transform: rotateY({rotation}deg);">
+            <div class="nucleotide g"></div>
+            <div class="nucleotide c"></div>
+        </div>
+        '''
+    elif pair_type == 'cg':
+        dna_animation_html += f'''
+        <div class="base-pair cg" style="top: {y_pos}%; transform: rotateY({rotation}deg);">
+            <div class="nucleotide c"></div>
+            <div class="nucleotide g"></div>
+        </div>
+        '''
+
+# Add 20 water particles for ambient effect
+for i in range(20):
+    x = 10 + (i % 7) * 10
+    y = (i * 5) % 100
+    delay = (i * 0.5) % 5
+    duration = 3 + (i % 3)
+    
+    dna_animation_html += f'''
+    <div class="water-particle" style="left: {x}%; top: {y}%; 
+        animation: float-particle {duration}s ease-in-out {delay}s infinite alternate;"></div>
+    '''
+
+dna_animation_html += '''
     </div>
 </div>
 
+<style>
+@keyframes float-particle {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.2;
+    }
+    50% {
+        transform: translate(5px, -5px) scale(1.5);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translate(0, -10px) scale(1);
+        opacity: 0.2;
+    }
+}
+</style>
+
 <div class="main-content">
-"""
+'''
 
 # Apply the styles and DNA animation
 st.markdown(dna_animation_html, unsafe_allow_html=True)
