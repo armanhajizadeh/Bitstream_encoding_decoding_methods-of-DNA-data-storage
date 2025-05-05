@@ -2,42 +2,50 @@ import streamlit as st
 import csv
 import os
 
-# Set page configuration
+# Set page configuration - with minimal menu items
 st.set_page_config(
     page_title="DNA Encoder",
     page_icon="🧬",
-    layout="wide"
+    layout="wide",
+    menu_items={
+        'Get help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
-# Apply custom CSS for font options
+# Apply Courier New font styling
 st.markdown("""
 <style>
-.font-roboto {
-    font-family: 'Roboto', sans-serif;
-}
-.font-montserrat {
-    font-family: 'Montserrat', sans-serif;
-}
-.font-open-sans {
-    font-family: 'Open Sans', sans-serif;
-}
-.font-lato {
-    font-family: 'Lato', sans-serif;
-}
-.font-courier {
-    font-family: 'Courier New', monospace;
-}
-.main-title {
-    font-size: 2.2rem;
-    margin-bottom: 1rem;
-    text-align: center;
-}
-.subtitle {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
-    text-align: center;
-    color: #666;
-}
+    /* Set Courier New as the default font for the entire app */
+    html, body, [class*="st-"] {
+        font-family: 'Courier New', monospace;
+    }
+    .main-title {
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+    }
+    .subtitle {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        color: #666;
+        font-family: 'Courier New', monospace;
+    }
+    /* Hide most of the default header */
+    header {
+        visibility: hidden;
+    }
+    /* Keep only the "Share" button visible */
+    header button:last-child {
+        visibility: visible;
+    }
+    /* Hide hamburger menu */
+    section[data-testid="stSidebar"] {
+        display: none;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -152,25 +160,9 @@ def gc_content(seq):
     gc = seq.count('G') + seq.count('C')
     return (gc / len(seq)) * 100.0
 
-# Font selection sidebar
-font_options = {
-    "Roboto": "font-roboto",
-    "Montserrat": "font-montserrat",
-    "Open Sans": "font-open-sans",
-    "Lato": "font-lato",
-    "Courier New": "font-courier"
-}
-
-with st.sidebar:
-    st.header("Settings")
-    selected_font = st.selectbox("Choose a font", list(font_options.keys()))
-
-# Set up the Streamlit interface with the selected font
-font_class = font_options[selected_font]
-
-# Custom title with the selected font
-st.markdown(f'<div class="{font_class}"><h1 class="main-title">Have you ever wondered how your name would be stored on a biological hard disk?</h1></div>', unsafe_allow_html=True)
-st.markdown(f'<div class="{font_class}"><p class="subtitle">Enter text below to encode it into DNA (ACTG) sequences</p></div>', unsafe_allow_html=True)
+# Set up the Streamlit interface
+st.markdown('<h1 class="main-title">Have you ever wondered how your name would be stored on a biological hard disk?</h1>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle">Enter text below to encode it into DNA (ACTG) sequences</p>', unsafe_allow_html=True)
 
 # Text input
 user_input = st.text_area("Enter your text to encode:", height=150)
@@ -204,7 +196,7 @@ if encode_button:
                 actg_sequence = text_to_actg(user_input, encoding_map)
                 
                 # Display results
-                st.markdown(f'<div class="{font_class}"><h2>Encoded DNA Sequence</h2></div>', unsafe_allow_html=True)
+                st.markdown('<h2>Encoded DNA Sequence</h2>', unsafe_allow_html=True)
                 st.code(actg_sequence)
                 
                 # Calculate and display GC content
@@ -212,11 +204,11 @@ if encode_button:
                 st.metric("GC Content", f"{gc:.2f}%")
                 
                 # Additional explanation
-                st.markdown(f'<div class="{font_class}"><p>This sequence represents how your text would be stored in a DNA-based storage system!</p></div>', unsafe_allow_html=True)
+                st.markdown('<p>This sequence represents how your text would be stored in a DNA-based storage system!</p>', unsafe_allow_html=True)
                 
         except Exception as e:
             st.error(f"Error: {str(e)}")
 
 # Footer information
 st.markdown("---")
-st.markdown(f'<div class="{font_class}"><p style="text-align:center; color:#888; font-size:0.8rem;">DNA Encoding Tool - Using biological molecules to store digital information</p></div>', unsafe_allow_html=True)
+st.markdown('<p style="text-align:center; color:#888; font-size:0.8rem;">DNA Encoding Tool - Using biological molecules to store digital information</p>', unsafe_allow_html=True)
